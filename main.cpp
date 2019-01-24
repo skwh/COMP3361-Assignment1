@@ -12,14 +12,23 @@
  */
 
 #include <cstdlib>
-
-using namespace std;
+#include <iostream>
 
 /*
  * 
  */
 int main(int argc, char** argv) {
-
+    if (argc != 4) {
+        std::cout << "Usage: " << argv[0] 
+                << " file_name block_duration time_slice" << std::endl;
+        return 1;
+    }
+    std::string fileName = std::string(argv[1]);
+    int blockDuration = argv[2] - '0';
+    int timeSlice = argv[3] - '0';
+    
+    
+    
     return 0;
 }
 
