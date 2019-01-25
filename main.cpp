@@ -11,8 +11,11 @@
  * Created on January 24, 2019, 11:04 AM
  */
 
+#include "Scheduler.h"
+
 #include <cstdlib>
 #include <iostream>
+#include <string>
 
 /*
  * 
@@ -24,10 +27,12 @@ int main(int argc, char** argv) {
         return 1;
     }
     std::string fileName = std::string(argv[1]);
-    int blockDuration = argv[2] - '0';
-    int timeSlice = argv[3] - '0';
+    int blockDuration = std::stoi(std::string(argv[2]), nullptr, 10);
+    int timeSlice = std::stoi(std::string(argv[3]), nullptr, 10);
     
-    
+    Scheduler s(fileName, blockDuration, timeSlice);
+    s.Simulate(Scheduler::ALGORITHM::ROUND_ROBIN);
+    s.Simulate(Scheduler::ALGORITHM::SPN);
     
     return 0;
 }

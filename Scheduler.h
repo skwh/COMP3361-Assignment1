@@ -15,6 +15,7 @@
 #define SCHEDULER_H
 
 #include <string>
+#include <vector>
 
 class Scheduler {
 public:
@@ -28,11 +29,50 @@ public:
     
     virtual ~Scheduler();
     
+    enum ALGORITHM {
+        ROUND_ROBIN, SPN
+    };
+    
+    void Simulate(ALGORITHM a);
+    
 private:
+    
+    //separate methods for simulation for logic encapsulation. we have to 
+    //duplicate the task data if we want the simulations to be independent
+    void simulateRoundRobin();
+    void simulateSPN();
+    
+    void readTasksFromFile();
+    
+    struct Task {
+        char name;
+        int arrivalTime;
+        int totalTime;
+        int blockInterval;
+    };
+    
+    //the tasks will need to be duplicated before they are used in the simulations,
+    //see comments above & below
+    Task* copyTask(const Task* orig) {
+        return new Task {
+            orig->name,
+            orig->arrivalTime,
+            orig->totalTime,
+            orig->blockInterval
+        };
+    }
     
     std::string fileName;
     int blockDuration;
     int timeSlice;
+    
+    //consider switching this to a priority queue for use with SPN
+    //also tasks are stored on the heap in case we want to extensively
+    //copy them and modify their data- perhaps this makes the simulation easier?
+    //preserving task state from read-in helps keep simulation times down
+    //(no extra reading from file)
+    std::vector<Task*> tasks; 
+    bool simulateReady;
 
 };
 
