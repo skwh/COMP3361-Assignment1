@@ -49,7 +49,7 @@ private:
     };
     
     struct Task {
-        char name;
+        std::string name;
         int arrivalTime;
         int totalTime;
         int blockInterval;
@@ -62,7 +62,7 @@ private:
         Task* next;
     };
     
-    bool operator<(const Task& larg, const Task& rarg);
+    //bool operator<(const Task& larg, const Task& rarg);
     
     //the tasks will need to be duplicated before they are used in the simulations,
     //see comments above & below

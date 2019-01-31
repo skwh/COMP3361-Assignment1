@@ -97,29 +97,31 @@ void Scheduler::simulateRoundRobin() {
     int systemTime = 0;
     int sliceProg = 0;
     
-    Task idle;
-    idle.name = "<idle>";
-    idle.intervalProg = 0;
     
-    Task* head;
-    Task* tail;
-    Task* currTask;
-    Task* pointer;
+    Task idleTask;
+    idleTask.name = "<idle>";
+    idleTask.intervalProg = 0;
+    Task* idle = &idleTask;
+    
+    Task* head = new Task;
+    Task* tail = new Task;
+    Task* currTask = new Task;
+    Task* pointer = new Task;
     
     std::vector<Task*>::iterator it = tasks.begin();
     for (it; it <= tasks.end(); it++) {
         if (it == tasks.begin()) {
-            head = it;
+            head = *it;
         }
         else if (it == tasks.end()) {
-            tail = it;
+            tail = *it;
             tail->next = head;
         }
         else {
-            it->next = it+1;
-            it->blockProg = 0;
-            it->intervalProg = 0;
-            it->totalProg = 0;
+            (*it)->next = *(it + 1);
+            (*it)->blockProg = 0;
+            (*it)->intervalProg = 0;
+            (*it)->totalProg = 0;
         }
     }
     
@@ -226,85 +228,11 @@ void Scheduler::simulateRoundRobin() {
         currTask->intervalProg++;
     }
     
-    /*
-    std::priority_queue<Task, std::vector<Task*>, operator<> scheduler;
-    std::vector<Task*>::iterator it = tasks.begin();
-    for (it; it != tasks.end(); it++) {
-        scheduler.push(*it);
-        if (it->arrivalTime == 0)
-        {
-            it->priority = 0;
-            //it->taskState = READY;
-        }
-        else {
-            it->priority = -2;
-            //it->taskState = BLOCKED;
-        }
-        //it->taskState = BLOCKED;
-        it->blockTime = 0;
-        it->intervalTime = 0;
-    }
-    
-    int systemTime = 0;
-    int currTimeSlice = 0;
-    
-    Task* currentTask = NULL;
-    
-    while (!tasks.empty()) {
-        std::vector<Task*> tempTasks;
-        for (int i = 0; i <= scheduler.size(); i++) {
-            tempTasks[i] = scheduler.top();
-            scheduler.pop();
-            
-            if (tempTasks[i]->priority >= 0)
-            {
-                tempTasks[i]->priority++;
-            }
-            else if (tempTasks[i]->priority == -1)
-            {
-                tempTasks[i]->blockTime++;
-            }
-        }
-        
-        // This may need to go after the currTimeSlice if statement
-        if (currentTask == NULL) {
-            for (int i = 0; i <= tempTasks.size(); i++)
-            {
-                if (tempTasks[i]->priority >= 0)
-                {
-                    currentTask = tempTasks[i];
-                }
-            }
-        }
-        if (currentTask == NULL)
-        {
-            
-        }
-        
-        
-        if (currTimeSlice == timeSlice)
-        {
-            currTimeSlice = 0;
-            currentTask->priority = 0;
-            scheduler.push(currentTask);
-            currentTask == NULL;
-        }
-        
-        currentTask->totalTime--;
-        currTimeSlice++;
-        
-        
-        
-        systemTime++;
-     
-    }
-    
-    
     //make sure the file was read in correctly
     for (std::vector<Task*>::iterator it = this->tasks.begin() ; it != tasks.end() ; ++it) {
         std::cout << (*it)->name << " " << (*it)->arrivalTime << " " << (*it)->totalTime << " " << (*it)->blockInterval << std::endl;
     }
-     * */
+     
 }
 
 void Scheduler::simulateSPN() {
