@@ -25,10 +25,10 @@
       <runprofile version="9">
         <runcommandpicklist>
           <runcommandpicklistitem>"${OUTPUT_PATH}"</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" program1_joblist.txt 20 10</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" data/program1_joblist.txt 20 10</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" program1_joblist.txt 20 10</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>"${OUTPUT_PATH}" data/program1_joblist.txt 20 10</runcommand>
+        <runcommand>"${OUTPUT_PATH}" program1_joblist.txt 20 10</runcommand>
         <rundir></rundir>
         <buildfirst>true</buildfirst>
         <terminal-type>0</terminal-type>

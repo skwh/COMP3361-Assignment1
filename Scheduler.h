@@ -44,12 +44,25 @@ private:
     
     void readTasksFromFile();
     
+    enum STATE {
+        BLOCKED, READY, ARRIVING
+    };
+    
     struct Task {
         char name;
         int arrivalTime;
         int totalTime;
         int blockInterval;
+        
+        STATE taskState;
+        //int priority;
+        int blockProg;
+        int intervalProg;
+        int totalProg;
+        Task* next;
     };
+    
+    bool operator<(const Task& larg, const Task& rarg);
     
     //the tasks will need to be duplicated before they are used in the simulations,
     //see comments above & below
