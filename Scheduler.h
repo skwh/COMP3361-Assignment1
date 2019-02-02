@@ -55,12 +55,13 @@ private:
         int blockInterval;
         
         STATE taskState;
-        //int priority;
         int blockProg;
         int intervalProg;
         int totalProg;
         Task* next;
     };
+    
+    
     
     //bool operator<(const Task& larg, const Task& rarg);
     

@@ -74,6 +74,8 @@ void Scheduler::readTasksFromFile() {
         currentLineStream >> intValues;
         currentTask->blockInterval = std::stoi(intValues, nullptr, 10);
         
+        currentTask->next = new Task;
+        
         this->tasks.push_back(currentTask);
     }
     if (fileStream.bad()) {
@@ -92,49 +94,74 @@ void Scheduler::readTasksFromFile() {
 void Scheduler::simulateRoundRobin() {
     std::cout << "RR " << this->blockDuration << " " << this->timeSlice << std::endl;
     
-    //TODO: implement
-    
     int systemTime = 0;
     int sliceProg = 0;
+    
     
     
     Task idleTask;
     idleTask.name = "<idle>";
     idleTask.intervalProg = 0;
+    idleTask.taskState = BLOCKED;
     Task* idle = &idleTask;
     
     Task* head = new Task;
+    head->next = new Task;
+    
     Task* tail = new Task;
+    tail->next = new Task;
+    
     Task* currTask = new Task;
+    currTask->next = new Task;
+    
     Task* pointer = new Task;
+    pointer->next = new Task;
+    
     
     std::vector<Task*>::iterator it = tasks.begin();
-    for (it; it <= tasks.end(); it++) {
+    
+    /*
+    for (it; it <= tasks.end(); it++)
+    {
+        std::cout << *it;
+    }
+     */
+    
+    for (it = tasks.begin(); it < tasks.end(); it++) {
         if (it == tasks.begin()) {
             head = *it;
+            (*it)->next = *(it + 1);
         }
-        else if (it == tasks.end()) {
+        else if (it == tasks.end()-1) {
             tail = *it;
             tail->next = head;
         }
         else {
             (*it)->next = *(it + 1);
-            (*it)->blockProg = 0;
-            (*it)->intervalProg = 0;
-            (*it)->totalProg = 0;
         }
+        (*it)->blockProg = 0;
+        (*it)->intervalProg = 0;
+        (*it)->totalProg = 0;
     }
+    
+    
     
     pointer = head;
     currTask = idle;
-    while ((head != NULL) && (tail != NULL)) {
+    while ((head != 0) && (tail != 0)) {
+        
+        if ((systemTime % 10) == 0)
+        {
+            int i = 0;
+        }
         
         // Checks to see if any new tasks have arrived and sets them to ready
+        pointer = head;
         do {
-            if (pointer->arrivalTime >= systemTime) {
+            if ((pointer->arrivalTime) == systemTime) {
                 pointer->taskState = READY;
             }
-            else {
+            else if (pointer->arrivalTime >= systemTime) {
                 pointer->taskState = ARRIVING;
             }
             
@@ -143,95 +170,108 @@ void Scheduler::simulateRoundRobin() {
         
         
         // check if currTask should terminate
-        if ((currTask->totalProg == currTask->totalTime) && currTask != idle) {
-            std::cout << " " << systemTime << "    " << currTask->name << "    " << currTask->intervalProg << "    T";
+        if ((currTask != idle) && (currTask->totalProg == currTask->totalTime)) {
+            std::cerr << sliceProg << "    T" << std::endl;
             
             pointer = head;
             while (pointer->next != currTask) { // find task pointing to currTask
                 pointer = pointer->next;
             }
             
-            if (pointer->next == head) { // if currTask is head, set head to currTask->next and remove currTask
-                pointer->next = head->next;
-                head = pointer->next;
+            if (pointer->next == pointer) { // if currTask is the only task, remove currTask, set head, tail, and pointer to null;
+                pointer->next = 0;
+                pointer = 0;
+                head = 0;
+                tail = 0; 
             }
             else if (pointer->next == tail) { // if currTask is tail, set tail to pointer (node before currTask) and remove currTask
                 pointer->next = head;
                 tail = pointer;
             }
-            else if (pointer->next == pointer) { // if currTask is the only task, remove currTask, set head, tail, and pointer to null;
-                pointer->next = NULL;
-                pointer = NULL;
-                head = NULL;
-                tail = NULL;
+            else if (pointer->next == head) { // if currTask is head, set head to currTask->next and remove currTask
+                pointer->next = head->next;
+                head = pointer->next;
             }
             else { // otherwise remove currTask
                 pointer->next = pointer->next->next;
             }
+            sliceProg = 0;
             currTask = idle;    
         }
         
-        // check if currTask should block
-        if ((currTask->intervalProg == currTask->blockInterval) && (currTask != idle)) {
-            std::cout << " " << systemTime << "    " << currTask->name << "    " << currTask->intervalProg << "    B";
-            currTask->intervalProg = 0;
-            currTask->taskState = BLOCKED;
-            currTask = idle;
-        }
-        
-        // checks blocked tasks and if they have fulfilled the block duration are set to ready
-        pointer = head;  
-        do { 
-            if ((pointer->taskState == BLOCKED) && (pointer->blockProg == blockDuration)) {
-                pointer->taskState = READY;
+        if(head != 0) {
+            // check if currTask should block
+            if ((currTask != idle) && (currTask->intervalProg == currTask->blockInterval)) {
+                std::cerr << sliceProg << "    B" << std::endl;
+                currTask->intervalProg = 0;
+                sliceProg = 0;
+                currTask->taskState = BLOCKED;
+                pointer = currTask;
+                currTask = idle;
             }
-            pointer = pointer->next;
-        } while (pointer != head);
         
         
-        // Check if currTask's timeslice is done 
-        if (sliceProg == timeSlice) {  // if true, currTask = idle and check for a ready task. Also update progress on blocked tasks.
-            std::cout << " " << systemTime << "    " << currTask->name << "    " << currTask->intervalProg << "    S";
-            sliceProg = 0;
-            currTask->taskState = READY;
-            currTask = idle;
-            pointer = head->next;
-            while (pointer != head->next) {
-                if (pointer->taskState == BLOCKED) {
+            // Check if currTask's timeslice is done 
+            if (sliceProg == timeSlice) {  // if true, currTask = idle and check for a ready task. Also update progress on blocked tasks.
+                std::cerr << sliceProg << "    S" << std::endl;
+                sliceProg = 0;
+                Task* temp = currTask->next;
+                pointer = temp;
+                currTask = idle;
+            
+                do { // find next task to switch to
+                    if (pointer->taskState == READY) {
+                        currTask = pointer;
+                        std::cerr << " " << systemTime << "    " << currTask->name << "    "; 
+                        break;
+                    }
+                    pointer = pointer->next;
+                } while (pointer != temp);
+            }
+            else if (currTask == idle) { // If idle, check for ready tasks
+                Task* temp = pointer;
+                do {
+                    if ((pointer->taskState == READY))
+                    {
+                        currTask = pointer;
+                        std::cerr << " " << systemTime << "    " << currTask->name << "    ";
+                        break;
+                    }
+                    pointer = pointer->next;
+                } while (pointer != temp);
+            }
+        
+            // checks blocked tasks and if they have fulfilled the block duration are set to ready, if not increment their block progress
+            pointer = head;  
+            do { 
+                if ((pointer->taskState == BLOCKED) && (pointer->blockProg == blockDuration)) {
+                    pointer->taskState = READY;
+                    pointer->blockProg = 0;
+               }
+                else if (pointer->taskState == BLOCKED) {
                     pointer->blockProg++;
                 }
-                if (pointer->taskState == READY) {
-                    currTask = pointer;
-                }
                 pointer = pointer->next;
-            }
-        }
-        else if (currTask == idle) { // If idle, check for ready tasks
-            pointer = head;
-            do {
-                if (pointer->taskState == READY)
-                {
-                    std::cout << " " << systemTime << "    " << currTask->name << "    " << currTask->intervalProg << "    I";
-                    currTask = pointer;
-                    
-                }
             } while (pointer != head);
+        
+            // if currTask is not idle increment currTask's total progress and the slice progress
+            if (currTask != idle) {
+                currTask->totalProg++;
+                sliceProg++;
+            }
+        
+        
+            systemTime++;
+           currTask->intervalProg++;
         }
-        
-        if (currTask != idle) {
-            currTask->totalProg++;
-            sliceProg++;
-        }
-        
-        
-        systemTime++;
-        currTask->intervalProg++;
     }
     
+    /*
     //make sure the file was read in correctly
     for (std::vector<Task*>::iterator it = this->tasks.begin() ; it != tasks.end() ; ++it) {
         std::cout << (*it)->name << " " << (*it)->arrivalTime << " " << (*it)->totalTime << " " << (*it)->blockInterval << std::endl;
     }
+     * */
      
 }
 
