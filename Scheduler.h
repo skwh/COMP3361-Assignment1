@@ -40,6 +40,7 @@ private:
     //separate methods for simulation for logic encapsulation. we have to 
     //duplicate the task data if we want the simulations to be independent
     void simulateRoundRobin();
+    
     void simulateSPN();
     
     void readTasksFromFile();
@@ -59,11 +60,29 @@ private:
         int intervalProg;
         int totalProg;
         Task* next;
+        float turnAround;
     };
     
     
     
-    //bool operator<(const Task& larg, const Task& rarg);
+    //consider switching this to a priority queue for use with SPN
+    //also tasks are stored on the heap in case we want to extensively
+    //copy them and modify their data- perhaps this makes the simulation easier?
+    //preserving task state from read-in helps keep simulation times down
+    //(no extra reading from file)
+    std::vector<Task*> tasks; 
+    bool simulateReady;
+    
+    void constructList(Task*& head, Task*& tail);
+    void checkArrivals(Task*& pointer, Task*& head, int* systemTime);
+    void checkTermination(Task*& currTask, Task*& pointer, Task*& head, Task*& tail, Task*& idle, int* sliceProg, int* systemTime);
+    void checkBlock(Task*& currTask, Task*& idle, Task*& pointer, int* sliceProg);
+    void switchTask(Task*& currTask, Task*& idle, Task*& pointer, int* sliceProg, int* systemTime, bool* stayIdle);
+    void updateBlocks(Task*& pointer, Task*& head);
+    float calcTurnAround(int* systemTime);
+    
+    
+    
     
     //the tasks will need to be duplicated before they are used in the simulations,
     //see comments above & below
@@ -79,15 +98,6 @@ private:
     std::string fileName;
     int blockDuration;
     int timeSlice;
-    
-    //consider switching this to a priority queue for use with SPN
-    //also tasks are stored on the heap in case we want to extensively
-    //copy them and modify their data- perhaps this makes the simulation easier?
-    //preserving task state from read-in helps keep simulation times down
-    //(no extra reading from file)
-    std::vector<Task*> tasks; 
-    bool simulateReady;
-
 };
 
 #endif /* SCHEDULER_H */
