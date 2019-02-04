@@ -125,6 +125,11 @@ void Scheduler::simulateRoundRobin() {
     // Main loop in which round robin scheduling takes place
     while ((head != 0) && (tail != 0)) {
         
+        if ((systemTime % 10) == 0)
+        {
+            int k = 0;
+        }
+        
         // Checks to see if any new tasks have arrived and sets them to ready
         checkArrivals(pointer, head, &systemTime);
         
@@ -145,12 +150,15 @@ void Scheduler::simulateRoundRobin() {
             if ((currTask != idle) && (currTask->intervalProg == currTask->blockInterval)) {
                 checkBlock(currTask, idle, pointer, &sliceProg);
             }
+            
+            // checks blocked tasks and if they have fulfilled the block duration are set to ready, if not increment their block progress
+            updateBlocks(pointer, head);
         
             // Check if a new Task needs to be loaded
             switchTask(currTask, idle, pointer, &sliceProg, &systemTime, &stayIdle);
         
             // checks blocked tasks and if they have fulfilled the block duration are set to ready, if not increment their block progress
-            updateBlocks(pointer, head);
+            //updateBlocks(pointer, head);
         
             // if currTask is not idle increment currTask's total progress and the slice progress
             if (currTask != idle) {
@@ -248,7 +256,7 @@ void Scheduler::checkBlock(Task*& currTask, Task*& idle, Task*& pointer, int* sl
 void Scheduler::switchTask(Task*& currTask, Task*& idle, Task*& pointer, int* sliceProg, int* systemTime, bool* stayIdle) {
     // Check if a new Task needs to be loaded
     // Check if currTask's timeslice is done 
-    if ((*sliceProg) == timeSlice) {  // if true, currTask = idle and check for a ready task. Also update progress on blocked tasks.
+    if (((*sliceProg) == timeSlice) && (currTask != idle)) {  // if true, currTask = idle and check for a ready task. Also update progress on blocked tasks.
         std::cout << (*sliceProg) << "\tS" << std::endl;
         (*sliceProg) = 0;
         Task* temp = currTask->next;
