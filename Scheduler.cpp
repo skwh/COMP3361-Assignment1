@@ -123,12 +123,7 @@ void Scheduler::simulateRoundRobin() {
     
     
     // Main loop in which round robin scheduling takes place
-    while ((head != 0) && (tail != 0)) {
-        
-        if ((systemTime % 10) == 0)
-        {
-            int k = 0;
-        }
+    while ((head != nullptr) && (tail != nullptr)) {
         
         // Checks to see if any new tasks have arrived and sets them to ready
         checkArrivals(pointer, head, &systemTime);
@@ -137,11 +132,6 @@ void Scheduler::simulateRoundRobin() {
         // check if currTask should terminate
         if ((currTask != idle) && (currTask->totalProg == currTask->totalTime)) {
             checkTermination(currTask, pointer, head, tail, idle, &sliceProg, &systemTime);
-        }
-        
-        if ((systemTime % 10) == 0)
-        {
-            int k = 0;
         }
         
         
@@ -221,10 +211,10 @@ void Scheduler::checkTermination(Task*& currTask, Task*& pointer, Task*& head, T
     }
             
     if (pointer->next == pointer) { // if currTask is the only task, remove currTask, set head, tail, and pointer to null;
-        pointer->next = 0;
-        pointer = 0;
-        head = 0;
-        tail = 0; 
+        pointer->next = nullptr;
+        pointer = nullptr;
+        head = nullptr;
+        tail = nullptr; 
     }
     else if (pointer->next == tail) { // if currTask is tail, set tail to pointer (node before currTask) and remove currTask
         pointer->next = head;
