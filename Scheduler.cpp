@@ -17,7 +17,7 @@
 #include <sstream>
 #include <iostream>
 #include <stdexcept>
-#include <queue>
+#include <unordered_set>
 
 Scheduler::Scheduler(std::string fileName, int blockDuration, int timeSlice) {
     this->fileName = fileName;
@@ -47,6 +47,7 @@ void Scheduler::Simulate(Scheduler::ALGORITHM a) {
     } else {
         this->simulateSPN();
     }
+    this->resetTaskStats();
 }
 
 void Scheduler::readTasksFromFile() {
@@ -83,6 +84,15 @@ void Scheduler::readTasksFromFile() {
     }
     fileStream.close();
     this->simulateReady = true;
+}
+
+void Scheduler::resetTaskStats() {
+    for (std::vector<Task*>::iterator it = tasks.begin(); it != tasks.end(); ++it) {
+        (*it)->blockProg = (*it)->arrivalTime;
+        (*it)->taskState = Scheduler::STATE::BLOCKED;
+        (*it)->totalProg = (*it)->totalTime;
+        (*it)->intervalProg = 0;
+    }
 }
 
 
@@ -320,6 +330,89 @@ void Scheduler::simulateSPN() {
     std::cout << "SPN " << this->blockDuration << std::endl;
     
     //TODO: implement
-    
-    std::cout << "Hey!!! I am also supposed to simulate SPN!!!" << std::endl;
+    Task* runningTask = nullptr;
+    std::unordered_set<Task*> readyTasks;
+    int systemTime = 0;
+    int terminatedTasks = 0;
+    int globalIntervalTime = 0;
+    bool idling = false;
+    while (terminatedTasks < tasks.size()) {
+        for (std::vector<Task*>::iterator it = tasks.begin(); it != tasks.end(); ++it) {
+            Task* currentTask = (*it);
+            switch (currentTask->taskState) {
+                case Scheduler::STATE::TERMINATED:
+                    continue;
+                case Scheduler::STATE::BLOCKED:
+                    if (currentTask->blockProg == 0) {
+                        currentTask->taskState = Scheduler::STATE::READY;
+                        currentTask->blockProg = this->blockDuration;
+                    } else {
+                        currentTask->blockProg--;
+                        break;
+                    }
+                case Scheduler::STATE::READY:
+                    readyTasks.insert(currentTask);
+                    break;
+                case Scheduler::STATE::RUNNING:
+                    if (currentTask->totalProg > 0) {
+                        if (currentTask->intervalProg < currentTask->blockInterval) {
+                            currentTask->intervalProg++;
+                            currentTask->totalProg--;
+                        } else {
+                            currentTask->intervalProg = 0;
+                            std::cout << globalIntervalTime << "\t" << "B" << std::endl;
+                            currentTask->taskState = Scheduler::STATE::BLOCKED;
+                            runningTask = nullptr;
+                        }
+                    } else {
+                        std::cout << globalIntervalTime << "\t" << "T" << std::endl;
+                        currentTask->taskState = Scheduler::STATE::TERMINATED;
+                        terminatedTasks++;
+                        runningTask = nullptr;
+                        globalIntervalTime = 0;
+                    }
+                    break;
+                default:
+                    break;
+            }
+            
+        }
+        if (runningTask == nullptr && !readyTasks.empty()) {
+            Task* shortestTask = nullptr;
+            unsigned int shortestTaskTime = -1;
+            for (std::unordered_set<Task*>::iterator it = readyTasks.begin(); it != readyTasks.end(); ++it) {
+                Task* currentReadyTask = (*it);
+                if (currentReadyTask->blockInterval < shortestTaskTime) {
+                    shortestTask = currentReadyTask;
+                    shortestTaskTime = shortestTask->blockInterval;
+                }
+            }
+            if (shortestTask != nullptr) {
+                if (idling) {
+                    std::cout << globalIntervalTime << "\t" << "I" << std::endl;
+                    idling = false;
+                }
+                runningTask = shortestTask;
+                readyTasks.clear();
+                runningTask->taskState = Scheduler::STATE::RUNNING;
+                runningTask->totalProg--;
+                runningTask->intervalProg++;
+                globalIntervalTime = 0;
+                std::cout << " " << systemTime << "\t" << runningTask->name << "\t";
+            }
+        }
+        // The system is idling
+        if (runningTask == nullptr && terminatedTasks != tasks.size()) {
+            if (!idling) {
+                idling = true;
+                std::cout << " " << systemTime << "\t" << "<idle>" << "\t";
+            }
+        }
+        if (terminatedTasks == tasks.size()) {
+            std::cout << " " << systemTime << "\t" << "<done>" << "\t" << globalIntervalTime << std::endl;
+        } else {
+            globalIntervalTime++;
+            systemTime++;
+        }
+    }
 }

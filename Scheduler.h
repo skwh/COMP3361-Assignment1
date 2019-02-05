@@ -45,8 +45,10 @@ private:
     
     void readTasksFromFile();
     
+    void resetTaskStats();
+    
     enum STATE {
-        BLOCKED, READY, ARRIVING
+        BLOCKED, READY, TERMINATED, RUNNING, ARRIVING
     };
     
     struct Task {
@@ -80,9 +82,6 @@ private:
     void switchTask(Task*& currTask, Task*& idle, Task*& pointer, int* sliceProg, int* systemTime, bool* stayIdle);
     void updateBlocks(Task*& pointer, Task*& head);
     float calcTurnAround(int* systemTime);
-    
-    
-    
     
     //the tasks will need to be duplicated before they are used in the simulations,
     //see comments above & below
