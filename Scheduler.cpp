@@ -92,6 +92,7 @@ void Scheduler::resetTaskStats() {
         (*it)->taskState = Scheduler::STATE::BLOCKED;
         (*it)->totalProg = (*it)->totalTime;
         (*it)->intervalProg = 0;
+        (*it)->turnAround = 0;
     }
 }
 
@@ -334,37 +335,46 @@ void Scheduler::simulateSPN() {
     int terminatedTasks = 0;
     int globalIntervalTime = 0;
     bool idling = false;
+    std::vector<Task*>::iterator it;
     while (terminatedTasks < tasks.size()) {
-        for (std::vector<Task*>::iterator it = tasks.begin(); it != tasks.end(); ++it) {
+        for (it = tasks.begin(); it != tasks.end(); ++it) {
             Task* currentTask = (*it);
             switch (currentTask->taskState) {
                 case Scheduler::STATE::TERMINATED:
+                    // Ignore terminated tasks
                     continue;
                 case Scheduler::STATE::BLOCKED:
-                    if (currentTask->blockProg == 0) {
+                    // Count down on the block progress
+                    currentTask->blockProg--;
+                    if (currentTask->blockProg <= 0) {
+                        // Task is unblocked, move to ready
                         currentTask->taskState = Scheduler::STATE::READY;
                         currentTask->blockProg = this->blockDuration;
                     } else {
-                        currentTask->blockProg--;
                         break;
                     }
                 case Scheduler::STATE::READY:
+                    // Add the ready task to the list of ready tasks
                     readyTasks.insert(currentTask);
                     break;
                 case Scheduler::STATE::RUNNING:
                     if (currentTask->totalProg > 0) {
                         if (currentTask->intervalProg < currentTask->blockInterval) {
+                            // The process does not block yet
                             currentTask->intervalProg++;
                             currentTask->totalProg--;
                         } else {
+                            // The process blocks
                             currentTask->intervalProg = 0;
                             std::cout << globalIntervalTime << "\t" << "B" << std::endl;
                             currentTask->taskState = Scheduler::STATE::BLOCKED;
                             runningTask = nullptr;
                         }
                     } else {
+                        // The process is finished, terminate it
                         std::cout << globalIntervalTime << "\t" << "T" << std::endl;
                         currentTask->taskState = Scheduler::STATE::TERMINATED;
+                        currentTask->turnAround = systemTime;
                         terminatedTasks++;
                         runningTask = nullptr;
                         globalIntervalTime = 0;
@@ -373,23 +383,26 @@ void Scheduler::simulateSPN() {
                 default:
                     break;
             }
-            
         }
+        // Choose another task to run, if the current task has finished and other tasks are ready
         if (runningTask == nullptr && !readyTasks.empty()) {
             Task* shortestTask = nullptr;
             unsigned int shortestTaskTime = -1;
-            for (std::unordered_set<Task*>::iterator it = readyTasks.begin(); it != readyTasks.end(); ++it) {
-                Task* currentReadyTask = (*it);
+            // Find the shortest task
+            for (std::unordered_set<Task*>::iterator sit = readyTasks.begin(); sit != readyTasks.end(); ++sit) {
+                Task* currentReadyTask = (*sit);
                 if (currentReadyTask->blockInterval < shortestTaskTime) {
                     shortestTask = currentReadyTask;
                     shortestTaskTime = shortestTask->blockInterval;
                 }
             }
             if (shortestTask != nullptr) {
+                // If the scheduler was previously idling, show the end of the idle
                 if (idling) {
                     std::cout << globalIntervalTime << "\t" << "I" << std::endl;
                     idling = false;
                 }
+                // Set the new task as the running task
                 runningTask = shortestTask;
                 readyTasks.clear();
                 runningTask->taskState = Scheduler::STATE::RUNNING;
@@ -399,15 +412,18 @@ void Scheduler::simulateSPN() {
                 std::cout << " " << systemTime << "\t" << runningTask->name << "\t";
             }
         }
-        // The system is idling
+        // No ready process is avaliable, the system is idling
         if (runningTask == nullptr && terminatedTasks != tasks.size()) {
             if (!idling) {
                 idling = true;
                 std::cout << " " << systemTime << "\t" << "<idle>" << "\t";
             }
         }
+        // The task list has been exhausted
         if (terminatedTasks == tasks.size()) {
-            std::cout << " " << systemTime << "\t" << "<done>" << "\t" << globalIntervalTime << std::endl;
+            float turnaroundTime = calcTurnAround(&systemTime);
+            std::cout << " " << systemTime << "\t" << "<done>" << "\t" << turnaroundTime << std::endl;
+            return;
         } else {
             globalIntervalTime++;
             systemTime++;
