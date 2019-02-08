@@ -16,6 +16,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_set>
 
 class Scheduler {
 public:
@@ -141,16 +142,32 @@ private:
      */
     float calcTurnAround(int* systemTime);
     
-    //the tasks will need to be duplicated before they are used in the simulations,
-    //see comments above & below
-    Task* copyTask(const Task* orig) {
-        return new Task {
-            orig->name,
-            orig->arrivalTime,
-            orig->totalTime,
-            orig->blockInterval
-        };
-    }
+    /**
+     * Choose the next ready process to run based on which task will take the shortest amount of time. 
+     * @param runningTask: pointer to the current running task
+     * @param readyTasks: the unordered set of tasks which are ready to run
+     * @param systemTime: integer scheduler system time
+     * @param globalIntervalTime: the amount of time that the scheduler was in the previous state
+     * @param idling: boolean indicating if the scheduler was idling
+     */
+    void chooseSPN(Task*& runningTask, std::unordered_set<Task*>& readyTasks, int& systemTime, int& globalIntervalTime, bool& idling);
+    
+    /**
+     * Handle the logic for when a process is running in SPN.
+     * @param runningTask: pointer to the current running task
+     * @param currentTask: pointer to the task which is currently being evaluated
+     * @param systemTime: integer scheduler system time
+     * @param globalIntervalTime: the amount of time the scheduler was in the previous state
+     * @param terminatedTasks: integer representing how many tasks have terminated
+     */
+    void spnHandleRunning(Task*& runningTask, Task*& currentTask, int& systemTime, int& globalIntervalTime, int& terminatedTasks);
+    
+    /**
+     * Handle the logic for when a process is blocked in SPN.
+     * @param currentTask: pointer to the task which is currently being evaluated
+     * @return if the task is done blocking
+     */
+    bool spnHandleBlocked(Task*& currentTask);
     
     std::string fileName;
     int blockDuration;
