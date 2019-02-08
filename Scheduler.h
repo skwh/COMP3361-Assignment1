@@ -39,6 +39,12 @@ private:
     
     //separate methods for simulation for logic encapsulation. we have to 
     //duplicate the task data if we want the simulations to be independent
+    
+    /*
+     * Initializes a number of variables for use in the Round Robin scheduling
+     * algorithm and contains the overarching while loop that contains the main
+     * while loop in which the algorithm runs.
+     */
     void simulateRoundRobin();
     
     void simulateSPN();
@@ -75,12 +81,64 @@ private:
     std::vector<Task*> tasks; 
     bool simulateReady;
     
+    /**
+     * Constructs a singly linked list using the elements of the tasks vector
+     * and assigns the head and tail of the list
+     * @param head: Pointer to be set to the head of the list
+     * @param tail: Pointer to be set to the tail of the list
+     */
     void constructList(Task*& head, Task*& tail);
+    /**
+     * Checks to see if any Tasks have arrived at the current Time interval
+     * @param pointer: Pointer for searching the linked list
+     * @param head: Pointer to the head of the list
+     * @param systemTime: Pointer to system time variable
+     */
     void checkArrivals(Task*& pointer, Task*& head, int* systemTime);
+    /**
+     * Checks to see if the current task should terminate
+     * @param currTask: Pointer to the current task
+     * @param pointer: Pointer for searching the linked list
+     * @param head: Pointer to the head of the list
+     * @param tail: Pointer to the tail of the list
+     * @param idle: Pointer to the idle task
+     * @param sliceProg: Pointer to the slice progress variable
+     * @param systemTime: Pointer to the systemTime variabel
+     */
     void checkTermination(Task*& currTask, Task*& pointer, Task*& head, Task*& tail, Task*& idle, int* sliceProg, int* systemTime);
+    /**
+     * Checks to see if the current task should block
+     * @param currTask: Pointer to the Current task
+     * @param idle: Pointer to the idle task
+     * @param pointer: Pointer for searching the linked list
+     * @param sliceProg: Pointer to the slice progress variable
+     */
     void checkBlock(Task*& currTask, Task*& idle, Task*& pointer, int* sliceProg);
+    /**
+     * If the current task needs to be switched due to it being idle or reaching
+     * the end of its time slice, switches the current task to the next ready
+     * task. If no ready tasks, the current task is made idle
+     * @param currTask: Pointer to the current task
+     * @param idle: Pointer to the idle task
+     * @param pointer: Pointer for searching the linked list
+     * @param sliceProg: Pointer to the slice progress variable
+     * @param systemTime: Pointer to the system time variable
+     * @param stayIdle: Pointer to a bool meant to signal if this idle task is 
+     * meant to persist due to a lack of ready tasks. 
+     */
     void switchTask(Task*& currTask, Task*& idle, Task*& pointer, int* sliceProg, int* systemTime, bool* stayIdle);
+    /**
+     * Checks all blocked tasks and either increments their block progress or
+     * unblocks them if they have completed their block progress
+     * @param pointer: Pointer for searching the linked list
+     * @param head: Pointer to the head of the list
+     */
     void updateBlocks(Task*& pointer, Task*& head);
+    /**
+     * Calculates the average turn around time of all the tasks
+     * @param systemTime: Pointer to the system time variables
+     * @return: Returns the average turn around time  
+     */
     float calcTurnAround(int* systemTime);
     
     //the tasks will need to be duplicated before they are used in the simulations,
